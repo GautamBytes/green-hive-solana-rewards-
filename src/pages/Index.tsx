@@ -469,7 +469,7 @@ const Index = () => {
               <p className="text-xs text-green-300">Stay connected with our community</p>
               <div className="flex gap-3 mt-2">
                 <a
-                  href="https://twitter.com/greentask"
+                  href="https://x.com/GautamM96"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-green-700/50 hover:bg-green-600/50 flex items-center justify-center transition-all hover:-translate-y-1 duration-300"
@@ -478,7 +478,7 @@ const Index = () => {
                   <Twitter className="w-4 h-4 text-green-200" />
                 </a>
                 <a
-                  href="https://discord.gg/greentask"
+                  href="https://discordapp.com/users/1332017125455302861"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-green-700/50 hover:bg-green-600/50 flex items-center justify-center transition-all hover:-translate-y-1 duration-300"
@@ -487,7 +487,7 @@ const Index = () => {
                   <MessageCircle className="w-4 h-4 text-green-200" />
                 </a>
                 <a
-                  href="https://t.me/greentask"
+                  href="https://t.me/@Gautam092528"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-green-700/50 hover:bg-green-600/50 flex items-center justify-center transition-all hover:-translate-y-1 duration-300"
