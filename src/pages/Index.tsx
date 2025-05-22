@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { motion } from "framer-motion";
@@ -17,7 +17,7 @@ import WaitlistBanner from "@/components/WaitlistBanner";
 import TestnetToggle from "@/components/TestnetToggle";
 import GovernanceCard from "@/components/GovernanceCard";
 import SneakPeekModal from "@/components/SneakPeekModal";
-import { Trophy, Award, ArrowRight, CheckCircle2, Activity, CircleDollarSign, Leaf, MessageSquare, Recycle, Users, LayoutDashboard, Lightbulb } from "lucide-react";
+import { Trophy, Award, ArrowRight, CheckCircle2, Activity, CircleDollarSign, Leaf, MessageSquare, Users, LayoutDashboard, Lightbulb, Recycle, Volume2, VolumeX } from "lucide-react";
 
 const Index = () => {
   const { connected, publicKey } = useWallet();
@@ -25,6 +25,10 @@ const Index = () => {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showSneakPeek, setShowSneakPeek] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [hasPlayedEntrySound, setHasPlayedEntrySound] = useState(false);
+  const audioContextRef = useRef(null);
+  const gainNodeRef = useRef(null);
   
   // Legacy state for backward compatibility
   const isConnected = connected;
@@ -34,6 +38,188 @@ const Index = () => {
     // The actual wallet connection is now handled by the WalletMultiButton
     console.log("Connect button clicked, but wallet connection is handled by adapter");
   };
+
+  // Create eco-friendly entry sound using Web Audio API
+  const createEcoEntrySound = () => {
+    if (!soundEnabled || hasPlayedEntrySound) return;
+    
+    try {
+      // Create audio context
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      
+      // Create main gain node for volume control
+      const mainGain = audioContext.createGain();
+      gainNodeRef.current = mainGain;
+      mainGain.connect(audioContext.destination);
+      mainGain.gain.setValueAtTime(0.25, audioContext.currentTime); // Set volume to 25%
+      
+      const currentTime = audioContext.currentTime;
+      
+      // Create a layered nature soundscape lasting ~6 seconds
+      
+      // Layer 1: Gentle wind/ambient pad (foundation)
+      const createAmbientPad = () => {
+        const oscillator1 = audioContext.createOscillator();
+        const oscillator2 = audioContext.createOscillator();
+        const filter = audioContext.createBiquadFilter();
+        const padGain = audioContext.createGain();
+        
+        oscillator1.type = 'sawtooth';
+        oscillator2.type = 'sine';
+        oscillator1.frequency.setValueAtTime(65.41, currentTime); // C2
+        oscillator2.frequency.setValueAtTime(130.81, currentTime); // C3
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(400, currentTime);
+        filter.frequency.exponentialRampToValueAtTime(800, currentTime + 6);
+        filter.Q.setValueAtTime(1, currentTime);
+        
+        oscillator1.connect(filter);
+        oscillator2.connect(filter);
+        filter.connect(padGain);
+        padGain.connect(mainGain);
+        
+        // Gentle fade in and out
+        padGain.gain.setValueAtTime(0, currentTime);
+        padGain.gain.linearRampToValueAtTime(0.3, currentTime + 1);
+        padGain.gain.linearRampToValueAtTime(0.3, currentTime + 4);
+        padGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 6);
+        
+        oscillator1.start(currentTime);
+        oscillator2.start(currentTime);
+        oscillator1.stop(currentTime + 6);
+        oscillator2.stop(currentTime + 6);
+      };
+      
+      // Layer 2: Nature melody (birds/wind chimes effect)
+      const createNatureMelody = () => {
+        const melodyNotes = [
+          { freq: 523.25, time: 0.5, duration: 1.2 }, // C5
+          { freq: 659.25, time: 1.2, duration: 1.0 }, // E5
+          { freq: 783.99, time: 2.0, duration: 1.5 }, // G5
+          { freq: 698.46, time: 2.8, duration: 1.2 }, // F5
+          { freq: 523.25, time: 3.8, duration: 1.8 }, // C5
+          { freq: 440.00, time: 4.5, duration: 1.5 }, // A4
+        ];
+        
+        melodyNotes.forEach(note => {
+          const oscillator = audioContext.createOscillator();
+          const envelope = audioContext.createGain();
+          const reverb = audioContext.createBiquadFilter();
+          
+          oscillator.type = 'triangle';
+          oscillator.frequency.setValueAtTime(note.freq, currentTime + note.time);
+          
+          // Add subtle frequency modulation for organic feel
+          const lfo = audioContext.createOscillator();
+          const lfoGain = audioContext.createGain();
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(4, currentTime + note.time);
+          lfoGain.gain.setValueAtTime(8, currentTime + note.time);
+          lfo.connect(lfoGain);
+          lfoGain.connect(oscillator.frequency);
+          
+          reverb.type = 'allpass';
+          reverb.frequency.setValueAtTime(1000, currentTime + note.time);
+          
+          oscillator.connect(reverb);
+          reverb.connect(envelope);
+          envelope.connect(mainGain);
+          
+          // Natural attack and decay
+          envelope.gain.setValueAtTime(0, currentTime + note.time);
+          envelope.gain.linearRampToValueAtTime(0.4, currentTime + note.time + 0.1);
+          envelope.gain.exponentialRampToValueAtTime(0.1, currentTime + note.time + note.duration * 0.7);
+          envelope.gain.exponentialRampToValueAtTime(0.001, currentTime + note.time + note.duration);
+          
+          lfo.start(currentTime + note.time);
+          oscillator.start(currentTime + note.time);
+          lfo.stop(currentTime + note.time + note.duration);
+          oscillator.stop(currentTime + note.time + note.duration);
+        });
+      };
+      
+      // Layer 3: Gentle percussion/nature sounds
+      const createNaturePercussion = () => {
+        const createRaindrop = (time, pitch = 1) => {
+          const oscillator = audioContext.createOscillator();
+          const envelope = audioContext.createGain();
+          const filter = audioContext.createBiquadFilter();
+          
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(1200 * pitch, currentTime + time);
+          
+          filter.type = 'highpass';
+          filter.frequency.setValueAtTime(800, currentTime + time);
+          
+          oscillator.connect(filter);
+          filter.connect(envelope);
+          envelope.connect(mainGain);
+          
+          envelope.gain.setValueAtTime(0, currentTime + time);
+          envelope.gain.linearRampToValueAtTime(0.15, currentTime + time + 0.01);
+          envelope.gain.exponentialRampToValueAtTime(0.001, currentTime + time + 0.3);
+          
+          oscillator.start(currentTime + time);
+          oscillator.stop(currentTime + time + 0.3);
+        };
+        
+        // Scattered raindrop effects throughout
+        [1.5, 2.3, 3.1, 3.7, 4.2, 4.8, 5.2].forEach((time, index) => {
+          createRaindrop(time, 0.8 + (index % 3) * 0.2);
+        });
+      };
+      
+      // Layer 4: Harmonic resonance (deep undertones)
+      const createHarmonicBase = () => {
+        const oscillator = audioContext.createOscillator();
+        const envelope = audioContext.createGain();
+        const filter = audioContext.createBiquadFilter();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(32.7, currentTime); // C1
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(150, currentTime);
+        
+        oscillator.connect(filter);
+        filter.connect(envelope);
+        envelope.connect(mainGain);
+        
+        envelope.gain.setValueAtTime(0, currentTime);
+        envelope.gain.linearRampToValueAtTime(0.2, currentTime + 2);
+        envelope.gain.linearRampToValueAtTime(0.2, currentTime + 4);
+        envelope.gain.exponentialRampToValueAtTime(0.001, currentTime + 6);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 6);
+      };
+      
+      // Create all layers
+      createAmbientPad();
+      createNatureMelody();
+      createNaturePercussion();
+      createHarmonicBase();
+      
+      setHasPlayedEntrySound(true);
+      
+    } catch (error) {
+      console.log("Audio context not supported or blocked:", error);
+    }
+  };
+
+  // Play entry sound when component mounts
+  useEffect(() => {
+    if (soundEnabled && !hasPlayedEntrySound) {
+      // Small delay to ensure page has loaded
+      const timer = setTimeout(() => {
+        createEcoEntrySound();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [soundEnabled, hasPlayedEntrySound]);
 
   useEffect(() => {
     if (connected) {
@@ -59,8 +245,21 @@ const Index = () => {
     return () => document.removeEventListener('click', handleAnchorClick);
   }, []);
 
+  // Cleanup audio context on unmount
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
   const handleShowSneakPeek = () => {
     setShowSneakPeek(true);
+  };
+
+  const toggleSound = () => {
+    setSoundEnabled(!soundEnabled);
   };
 
   return (
@@ -73,6 +272,23 @@ const Index = () => {
       
       <div className="fixed top-4 right-4 z-50">
         <NotificationCenter />
+      </div>
+      
+      {/* Sound Toggle Button */}
+      <div className="fixed top-4 left-4 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleSound}
+          className="bg-white/80 dark:bg-green-900/80 backdrop-blur-sm border-green-200 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-800/60"
+          title={soundEnabled ? "Disable sounds" : "Enable sounds"}
+        >
+          {soundEnabled ? (
+            <Volume2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          ) : (
+            <VolumeX className="h-4 w-4 text-gray-500" />
+          )}
+        </Button>
       </div>
       
       <div className="fixed top-20 right-4 z-40">
@@ -379,3 +595,4 @@ const Index = () => {
 };
 
 export default Index;
+

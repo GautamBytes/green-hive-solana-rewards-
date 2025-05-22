@@ -1,4 +1,3 @@
-
 import { FC, ReactNode, useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
@@ -17,12 +16,18 @@ export const SolanaContextProvider: FC<SolanaContextProviderProps> = ({ children
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'
   const network = WalletAdapterNetwork.Devnet;
 
-  // You can also provide a custom RPC endpoint
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // Use VITE_SOLANA_RPC_URL if provided, otherwise default to the cluster API
+  const endpoint = useMemo(() => {
+    // Vite exposes env vars prefixed with VITE_ on import.meta.env
+    return import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network);
+  }, [network]);
 
-  const wallets = useMemo(() => [
-    new PhantomWalletAdapter(),
-  ], []);
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+    ],
+    []
+  );
 
   return (
     <ConnectionProvider endpoint={endpoint}>
@@ -34,3 +39,5 @@ export const SolanaContextProvider: FC<SolanaContextProviderProps> = ({ children
     </ConnectionProvider>
   );
 };
+
+

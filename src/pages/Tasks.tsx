@@ -7,10 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Filter, Search, MapPin, Calendar } from "lucide-react";
+import { Filter, Search, MapPin, Calendar, Plus } from "lucide-react";
 import TaskMap from "@/components/tasks/TaskMap";
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskDetail from "@/components/tasks/TaskDetail";
+import CreateTaskForm from "@/components/tasks/CreateTaskForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,8 +57,10 @@ const Tasks = () => {
   const { connected } = useWallet();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('all');
   const [sortValue, setSortValue] = useState('proximity');
+  const [isOrganization, setIsOrganization] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState({
     recycling: true,
     treePlanting: true,
@@ -165,6 +175,18 @@ const Tasks = () => {
     }));
   };
 
+  const handleRegisterAsOrganization = () => {
+    setIsOrganization(true);
+  };
+
+  const handleCreateTask = () => {
+    setIsCreateOpen(true);
+  };
+
+  const handleTaskCreated = () => {
+    setIsCreateOpen(false);
+  };
+
   // Filter and sort tasks
   const filteredTasks = mockTasks.filter(task => {
     if (filterValue === 'all') return true;
@@ -182,7 +204,7 @@ const Tasks = () => {
   // Sort tasks
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     if (sortValue === 'proximity') {
-      // Fix Type Error: Convert string distances to numbers before arithmetic operations
+      // Convert string distances to numbers before comparison
       return parseFloat(a.distance) - parseFloat(b.distance);
     }
     if (sortValue === 'reward') {
@@ -209,6 +231,17 @@ const Tasks = () => {
           </div>
           
           <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
+            {isOrganization && (
+              <Button 
+                variant="eco" 
+                className="flex items-center gap-2"
+                onClick={handleCreateTask}
+              >
+                <Plus className="h-4 w-4" />
+                Create Task
+              </Button>
+            )}
+            
             <Tabs defaultValue="map" className="w-[400px]">
               <TabsList>
                 <TabsTrigger value="map">Map View</TabsTrigger>
@@ -328,11 +361,26 @@ const Tasks = () => {
         <Separator className="my-12" />
         
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-green-800 dark:text-green-300 mb-2">Want to create an eco task?</h2>
-          <p className="text-green-600 dark:text-green-400 mb-4">
-            Organizations can create custom eco tasks for the community
-          </p>
-          <Button variant="outline">Register as Organization</Button>
+          {!isOrganization ? (
+            <>
+              <h2 className="text-xl font-semibold text-green-800 dark:text-green-300 mb-2">Want to create an eco task?</h2>
+              <p className="text-green-600 dark:text-green-400 mb-4">
+                Organizations can create custom eco tasks for the community
+              </p>
+              <Button variant="outline" onClick={handleRegisterAsOrganization}>Register as Organization</Button>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold text-green-800 dark:text-green-300 mb-2">Create Impactful Eco-Tasks</h2>
+              <p className="text-green-600 dark:text-green-400 mb-4">
+                As a registered organization, you can create custom eco-tasks for the community
+              </p>
+              <Button variant="eco" onClick={handleCreateTask} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create New Task
+              </Button>
+            </>
+          )}
         </div>
       </div>
       
@@ -341,6 +389,19 @@ const Tasks = () => {
         open={isDetailOpen}
         onClose={handleCloseTaskDetail}
       />
+      
+      {/* Create Task Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Eco-Task</DialogTitle>
+            <DialogDescription>
+              Create an environmental task for the community. All tasks require verification through photo proof.
+            </DialogDescription>
+          </DialogHeader>
+          <CreateTaskForm onSuccess={handleTaskCreated} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletName } from '@solana/wallet-adapter-base';
@@ -6,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Wallet, ChevronDown, MessageSquare, Clock, MapPin } from "lucide-react";
+import { Wallet, ChevronDown, MessageSquare, Clock, MapPin, ArrowRight, Shield, Zap, Star } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,32 +27,50 @@ import { Badge } from "../ui/badge";
 
 interface WalletOption {
   name: WalletName;
-  icon: string;
+  description: string;
+  icon: any;
+  popular?: boolean;
 }
 
 const WalletConnect = () => {
   const { connected, publicKey, select, wallets } = useWallet();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
-  
+  const [hoveredWallet, setHoveredWallet] = useState<string | null>(null);
+
   const walletOptions: WalletOption[] = [
-    { name: 'Phantom' as WalletName, icon: "https://phantom.app/apple-touch-icon.png" },
-    { name: 'Solflare' as WalletName, icon: "https://solflare.com/favicon-96x96.png" },
-    { name: 'Backpack' as WalletName, icon: "https://backpack.app/icon-256.png" },
-    { name: 'Brave' as WalletName, icon: "https://brave.com/static-assets/images/brave-logo-sans-text.svg" },
+    { 
+      name: 'Phantom' as WalletName, 
+      description: 'Most popular Solana wallet',
+      icon: Wallet,
+      popular: true
+    },
+    { 
+      name: 'Solflare' as WalletName, 
+      description: 'Secure multi-platform wallet',
+      icon: Shield
+    },
+    { 
+      name: 'Backpack' as WalletName, 
+      description: 'Built for the next generation',
+      icon: Zap
+    },
+    { 
+      name: 'Brave' as WalletName, 
+      description: 'Privacy-focused browser wallet',
+      icon: Star
+    },
   ];
-  
-  // Get shortened wallet address
+
   const shortenedAddress = publicKey ? 
     `${publicKey.toString().slice(0, 4)}...${publicKey.toString().slice(-4)}` : 
     null;
-  
-  // Mock tasks for the dropdown
+
   const mockTasks = [
     { id: 1, title: "Plastic Clean-up @ Central Park", due: "Today" },
     { id: 2, title: "Tree Planting @ Riverside", due: "Tomorrow" },
     { id: 3, title: "Recycling Drive @ Community Center", due: "In 3 days" }
   ];
-  
+
   const handleSelectWallet = (walletName: WalletName) => {
     const wallet = wallets.find(w => w.adapter.name === walletName);
     if (wallet) {
@@ -61,7 +78,7 @@ const WalletConnect = () => {
       setShowWalletOptions(false);
     }
   };
-  
+
   if (connected) {
     return (
       <div className="flex items-center gap-4">
@@ -69,7 +86,7 @@ const WalletConnect = () => {
           <span className="font-semibold mr-2 text-green-800 dark:text-green-300">$GREEN:</span>
           <span className="text-green-700 dark:text-green-200 font-mono">120.5</span>
         </div>
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 hover:from-green-600 hover:to-green-700 text-white">
@@ -116,40 +133,95 @@ const WalletConnect = () => {
       </div>
     );
   }
-  
+
   return (
     <>
       <Dialog open={showWalletOptions} onOpenChange={setShowWalletOptions}>
         <DialogTrigger asChild>
-          <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md transition-all duration-300">
+          <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105">
             <Wallet className="mr-2 h-5 w-5" />
-            Select Wallet
+            Connect Wallet
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl">Connect Your Wallet</DialogTitle>
-            <DialogDescription className="text-center">
-              Choose a wallet provider to connect with GreenTask
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-center text-xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
+              Connect Your Wallet
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-gray-600 dark:text-gray-400">
+              Choose your preferred wallet to start earning $GREEN tokens
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            {walletOptions.map((option) => (
-              <Card 
-                key={option.name} 
-                className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-1"
-                onClick={() => handleSelectWallet(option.name)}
-              >
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <img 
-                    src={option.icon} 
-                    alt={`${option.name} wallet`} 
-                    className="w-16 h-16 object-contain mb-3" 
-                  />
-                  <h3 className="font-medium">{option.name}</h3>
-                </CardContent>
-              </Card>
-            ))}
+          
+          <div className="grid grid-cols-1 gap-3 mt-6">
+            {walletOptions.map((option, index) => {
+              const IconComponent = option.icon;
+              return (
+                <motion.div
+                  key={option.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card 
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-2 ${
+                      hoveredWallet === option.name 
+                        ? 'border-green-400 bg-green-50 dark:bg-green-950' 
+                        : 'border-gray-200 dark:border-gray-700 hover:border-green-300'
+                    } ${option.popular ? 'ring-2 ring-green-200 dark:ring-green-800' : ''}`}
+                    onClick={() => handleSelectWallet(option.name)}
+                    onMouseEnter={() => setHoveredWallet(option.name)}
+                    onMouseLeave={() => setHoveredWallet(null)}
+                  >
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-2 rounded-full ${
+                          hoveredWallet === option.name 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                        } transition-all duration-300`}>
+                          <IconComponent className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-base text-gray-900 dark:text-gray-100">
+                              {option.name}
+                            </h3>
+                            {option.popular && (
+                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
+                                Popular
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className={`h-4 w-4 transition-all duration-300 ${
+                        hoveredWallet === option.name 
+                          ? 'text-green-500 translate-x-1' 
+                          : 'text-gray-400'
+                      }`} />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+          
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="flex items-start space-x-2">
+              <Shield className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-green-800 dark:text-green-200">
+                  Secure Connection
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                  Your connection is encrypted and secure. We never store private keys.
+                </p>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -158,3 +230,4 @@ const WalletConnect = () => {
 };
 
 export default WalletConnect;
+
